@@ -11,7 +11,6 @@
 set -euo pipefail
 
 REPO_URL="${NEOX_REPO_URL:-https://project-neox.github.io/Neox-Repo}"
-KEYRING="/usr/share/keyrings/neox-repo.gpg"
 SOURCE_LIST="/etc/apt/sources.list.d/neox-repo.list"
 SUITE="stable"
 COMPONENT="main"
@@ -22,23 +21,19 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 echo "==> Neox APT deposu ekleniyor: $REPO_URL"
+echo "UYARI: Depo GPG ile imzalanmiyor; [trusted=yes] bu depoya guvendiginizi belirtir."
 
-# 1) Imzalama anahtari (binary .gpg - hedef sistemde gpg kurulu olmasa da calisir)
-$SUDO mkdir -p /usr/share/keyrings
-curl -fsSL "$REPO_URL/neox-repo.gpg" -o /tmp/neox-repo.gpg
-$SUDO install -m 0644 /tmp/neox-repo.gpg "$KEYRING"
-rm -f /tmp/neox-repo.gpg
-echo "    anahtar kuruldu: $KEYRING"
-
-# 2) sources.list.d girdisi
-echo "deb [signed-by=$KEYRING] $REPO_URL $SUITE $COMPONENT" | $SUDO tee "$SOURCE_LIST" >/dev/null
+# Imzasiz depo girdisini ekle. Eski signed-by ayari varsa bu dosya yenilenir.
+$SUDO install -d -m 0755 /etc/apt/sources.list.d
+echo "deb [trusted=yes] $REPO_URL $SUITE $COMPONENT" | $SUDO tee "$SOURCE_LIST" >/dev/null
+$SUDO rm -f /usr/share/keyrings/neox-repo.gpg
 echo "    depo girdisi kuruldu: $SOURCE_LIST"
 
-# 3) Paket listelerini guncelle
+# Paket listelerini guncelle
 $SUDO apt-get update
 echo "    apt listeleri guncellendi"
 
-# 4) (Opsiyonel) Otomatik guncelleme timer'i
+# (Opsiyonel) Otomatik guncelleme timer'i
 if [ "${1:-}" = "--enable-auto-update" ]; then
     echo "==> Otomatik guncelleme (systemd timer) kuruluyor"
     curl -fsSL "$REPO_URL/auto-update.sh" -o /tmp/neox-repo-auto-update

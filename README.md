@@ -1,76 +1,72 @@
 # Neox-Repo — Debian APT Deposu
 
-Bu GitHub deposu aynı zamanda **canlı bir Debian APT deposu**dur. GitHub Pages üzerinden
-hem güzel bir web sitesi olarak hem de `apt` tarafından tüketilebilen bir paket deposu
-olarak yayınlanır.
+Bu GitHub deposu hem **GitHub Pages sitesi** hem de **imzasız Debian APT deposu** olarak yayınlanır. Paket metadata'sı GitHub Actions tarafından oluşturulur; APT deposu, yayın öncesinde izole bir ortamda test edilir.
 
 🌐 **Site / depo adresi:** https://project-neox.github.io/Neox-Repo/
 
-```
+```text
 https://project-neox.github.io/Neox-Repo/
-├── index.html                  ← bu sitenin kendisi
-├── setup-repo.sh               ← tek komutla kurulum scripti
-├── auto-update.sh              ← otomatik paket kur/güncelleme scripti
-├── neox-repo.gpg / .asc        ← GPG imza anahtarı (binary + armored)
-├── packages.json               ← sitenin okuduğu paket listesi
-├── pool/                       ← .deb dosyaları (buraya at, push'la → yayınlanır)
+├── index.html, style.css, app.js  ← depo sitesi
+├── setup-repo.sh                  ← tek komutla kurulum scripti
+├── auto-update.sh                 ← otomatik paket kur/güncelleme scripti
+├── packages.json                  ← sitenin okuduğu paket listesi
+├── pool/                          ← .deb dosyaları
 └── dists/stable/
-    ├── InRelease               ← GPG clearsigned Release
-    ├── Release + Release.gpg   ← Release ve detached imza
+    ├── Release                    ← imzasız APT metadata'sı ve checksum'lar
     └── main/binary-amd64/
-        ├── Packages(.gz)       ← paket indexi
+        └── Packages(.gz)          ← paket indexi
 ```
 
 ## 🚀 Hızlı kurulum (Debian/Ubuntu)
 
 ```bash
-# Tek komut — anahtar + depo girdisi + apt update, hepsi bir arada:
+# Depo kaynağını ekler ve apt listelerini günceller:
 curl -fsSL https://project-neox.github.io/Neox-Repo/setup-repo.sh | sudo bash
+
+# Örnek paketi kur:
+sudo apt install neox-repo-setup
 ```
 
 Adım adım:
 
 ```bash
-# 1) GPG anahtarını kur
-curl -fsSL https://project-neox.github.io/Neox-Repo/neox-repo.gpg \
-  | sudo tee /usr/share/keyrings/neox-repo.gpg > /dev/null
-
-# 2) Depoyu ekle
-echo "deb [signed-by=/usr/share/keyrings/neox-repo.gpg] https://project-neox.github.io/Neox-Repo stable main" \
+# 1) İmzasız depo kaynağını ekle
+echo "deb [trusted=yes] https://project-neox.github.io/Neox-Repo stable main" \
   | sudo tee /etc/apt/sources.list.d/neox-repo.list
 
-# 3) Güncelle ve paket kur
+# 2) Paket listesini yenile ve paketi kur
 sudo apt update
 sudo apt install neox-repo-setup
 ```
 
-## 🔁 Otomatik güncelleme (yeni paketler sisteme otomatik geçsin)
+> **Güvenlik:** `trusted=yes`, APT'ye bu imzasız kaynağa güvenmesini söyler. Yalnızca güvendiğiniz depolar için kullanın. GPG imzası olmadığından APT yayıncının kimliğini doğrulayamaz; HTTPS aktarımı korur, metadata checksum'ları ise dosyaların metadata ile tutarlılığını kontrol eder.
 
-Depoya yeni bir `.deb` yayınlandığında sistemin haberi olsun istiyorsan:
+Önceden GPG imzalı kaynak satırını kullanan kurulumlarda geçiş için yeni `setup-repo.sh` scriptini çalıştırın. Script mevcut `neox-repo.list` dosyasını `[trusted=yes]` kaynağıyla yeniler ve artık kullanılmayan Neox keyring dosyasını kaldırır.
+
+## 🔁 Otomatik güncelleme
+
+Depoya yeni paket geldiğinde sistemin düzenli olarak güncellenmesini istiyorsanız:
 
 ```bash
-# Otomatik güncelleme scriptini kur
+# Scripti kur
 curl -fsSL https://project-neox.github.io/Neox-Repo/auto-update.sh \
   | sudo tee /usr/local/bin/neox-repo-auto-update > /dev/null
 sudo chmod +x /usr/local/bin/neox-repo-auto-update
 
-# systemd timer ile her saat başı otomatik çalıştır (önerilen)
+# systemd timer ile her saat başı çalıştır (önerilen)
 curl -fsSL https://project-neox.github.io/Neox-Repo/neox-repo-auto-update.service | sudo tee /etc/systemd/system/neox-repo-auto-update.service > /dev/null
 curl -fsSL https://project-neox.github.io/Neox-Repo/neox-repo-auto-update.timer   | sudo tee /etc/systemd/system/neox-repo-auto-update.timer > /dev/null
 sudo systemctl daemon-reload
 sudo systemctl enable --now neox-repo-auto-update.timer
 ```
 
-Veya kurulum scriptiyle tek seferde:
+Kurulum scripti timer'ı da kurabilir:
 
 ```bash
 curl -fsSL https://project-neox.github.io/Neox-Repo/setup-repo.sh | sudo bash -s -- --enable-auto-update
 ```
 
-`auto-update.sh` şunları yapar:
-
-1. **Sadece** Neox deposunun listesini yeniler (`apt update` tüm sistemi yormaz)
-2. Depodaki **tüm paketleri kurar** — yeni paketler otomatik sisteme geçer, kurulu olanlar güncellenir
+`auto-update.sh` yalnızca Neox deposunun listesini yeniler, ardından depodaki paketleri kurar/günceller.
 
 ## 📦 Depoya paket yayınlama
 
@@ -83,52 +79,46 @@ git commit -m "feat: my-package 1.0.0"
 git push
 ```
 
-**GitHub Actions otomatik olarak:**
+GitHub Actions otomatik olarak:
 
-1. `pool/` içindeki tüm `.deb`'lerden `dists/stable` metadata'sini üretir (`Packages`, `Packages.gz`, `Release`)
-2. GPG ile imzalar (`InRelease` + `Release.gpg`)
-3. Depoyu uçtan uca test eder (imza doğrulaması + `apt update` + paket indirme — `scripts/selftest-apt-repo.sh`)
-4. Test geçerse her şeyi `gh-pages` dalına yayınlar → site ve depo anında güncellenir
+1. `pool/` içindeki paketlerden `Packages`, `Packages.gz` ve `Release` metadata'sını üretir.
+2. Depoyu `[trusted=yes]` kullanan izole bir APT ortamında test eder (`apt update` ve her paketi indirme — `scripts/selftest-apt-repo.sh`).
+3. Test geçerse siteyi ve depoyu `gh-pages` dalına yayınlar.
 
 ## 🛠 Yerel geliştirme
 
-Depoyu kendi makinenizde derlemek ve test etmek için:
-
 ```bash
-# 1) Örnek paketi üret (pool/neox-repo-setup_1.0.0_all.deb)
+# Örnek paket üret (pool/neox-repo-setup_1.0.1_all.deb)
 bash scripts/build-sample-package.sh
 
-# 2) Depoyu derle + imzala (imza anahtarı: keys/ veya NEOX_GPG_PRIVATE_KEY env)
+# Depoyu derle (GPG veya özel anahtar gerekmez)
 bash scripts/build-apt-repo.sh public
 
-# 3) Uçtan uca test (imza + apt update + indirme)
+# APT ile uçtan uca test et
 bash scripts/selftest-apt-repo.sh public
 ```
 
-> Not: Yerelde `gpg` yoksa imzalama için `pgpy` (pip), `apt-ftparchive` yoksa
-> `dpkg-scanpackages` + `scripts/make-release.py` kullanılır. CI'da (ubuntu-latest)
-> tüm araçlar hazırdır.
+`apt-ftparchive` yoksa metadata üretimi için `dpkg-scanpackages` ve `scripts/make-release.py` kullanılır. CI, `apt-utils` ve `dpkg-dev` paketlerini kurar.
 
-## 🔐 Güvenlik
+## 🔐 Güvenlik ve imzasız depo
 
-- Depo **GPG ile imzalanır**; `apt` imzasız/bozuk depoyu reddeder.
-- İmza anahtarı: `keys/neox-repo-key.asc` (parmak izi `620FCA4444B9A764E38692378A600E629DEB4D5E`)
-- **Özel anahtar** GitHub Actions secret'ı olarak saklanır (`NEOX_GPG_PRIVATE_KEY`) — depoya asla commit'lemeyin.
-- Bir güncelleme **yalnızca CI testleri geçerse** yayınlanır.
+- APT deposu GPG ile imzalanmaz; `InRelease`, `Release.gpg` ve GPG anahtarı yayınlanmaz.
+- İstemci kaynak satırı `[trusted=yes]` kullanır. Bu, APT'nin imzasız depoyu kullanmasına izin verir; yayıncı doğrulaması sağlamaz.
+- `Release` metadata'sındaki checksum'lar APT'nin indirilen index ve paketleri metadata ile karşılaştırmasını sağlar, ancak imzasız metadata'ya karşı kötü niyetli değişikliği engellemez.
+- GitHub Actions yalnızca derleme ve APT tüketim testleri geçerse yayınlar. CI için GPG özel anahtarı veya `NEOX_GPG_PRIVATE_KEY` secret'ı gerekmez.
 
 ## 📁 Yapı
 
 | Dizin / Dosya | Açıklama |
 | --- | --- |
-| `pool/` | Yayınlanacak `.deb` dosyaları (push → otomatik yayın) |
-| `dists/` | CI tarafından üretilen APT metadata (commit'lenmez) |
-| `site/` | GitHub Pages sitesi (index.html, style.css, app.js) |
-| `scripts/build-apt-repo.sh` | Depo derleme + imzalama scripti |
-| `scripts/selftest-apt-repo.sh` | Uçtan uca depo testi |
+| `pool/` | Yayınlanacak `.deb` dosyaları |
+| `dists/` | CI tarafından üretilen APT metadata'sı (commit'lenmez) |
+| `index.html`, `style.css`, `app.js` | GitHub Pages sitesi |
+| `scripts/build-apt-repo.sh` | İmzasız APT deposunu derleme scripti |
+| `scripts/selftest-apt-repo.sh` | İzole APT uçtan uca testi |
 | `scripts/setup-repo.sh` | Hedef sistemde depo kurulumu |
 | `scripts/auto-update.sh` | Otomatik paket kur/güncelleme |
-| `keys/` | GPG public key |
-| `.github/workflows/apt-repo.yml` | Yayınlama pipeline'ı |
+| `.github/workflows/apt-repo.yml` | Derleme, test ve yayın pipeline'ı |
 
 ## 📄 Lisans
 

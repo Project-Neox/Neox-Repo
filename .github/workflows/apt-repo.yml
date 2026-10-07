@@ -1,15 +1,16 @@
 name: "APT Depo Yayını"
 
-# pool/'a .deb atıldığında (veya site/script değiştiğinde) APT deposunu derler,
-# GPG ile imzalar, uçtan uca test eder ve gh-pages dalına (GitHub Pages) yayınlar.
+# pool/'a .deb atildiginda (veya site/script degistiginde) APT deposunu derler,
+# imzasiz depoyu ucundan uca test eder ve gh-pages dalina yayinlar.
 on:
   push:
     branches: [main, "arena/**"]
     paths:
       - "pool/**"
-      - "site/**"
       - "scripts/**"
-      - "keys/**"
+      - "index.html"
+      - "app.js"
+      - "style.css"
       - ".github/workflows/apt-repo.yml"
   workflow_dispatch:
 
@@ -22,43 +23,24 @@ concurrency:
 
 jobs:
   publish:
-    name: "Derle, imzala, test et, yayınla"
+    name: "Derle, test et, yayinla"
     runs-on: ubuntu-latest
     steps:
-      - name: "Depoyu çek"
+      - name: "Depoyu cek"
         uses: actions/checkout@v4
 
-      - name: "Araçlar kuruluyor (dpkg-dev, apt-utils, gnupg)"
+      - name: "Araclar kuruluyor (dpkg-dev, apt-utils, python3)"
         run: |
           sudo apt-get update
-          sudo apt-get install -y dpkg-dev apt-utils gnupg python3
+          sudo apt-get install -y dpkg-dev apt-utils python3
 
-      - name: "GPG imza anahtarı hazırlanıyor"
-        env:
-          NEOX_GPG_PRIVATE_KEY: ${{ secrets.NEOX_GPG_PRIVATE_KEY }}
-        run: |
-          if [ -z "$NEOX_GPG_PRIVATE_KEY" ]; then
-            echo "::error::NEOX_GPG_PRIVATE_KEY secret'i eksik — depo GPG ile imzalanamaz!"
-            echo ""
-            echo "Cozum (repo admini tarafindan bir kez yapilir):"
-            echo "  gh secret set NEOX_GPG_PRIVATE_KEY --repo Project-Neox/Neox-Repo < neox-private-key.asc"
-            echo "veya GitHub UI: Settings → Secrets and variables → Actions → New repository secret"
-            echo "  Name: NEOX_GPG_PRIVATE_KEY   Value: <neox-private-key.asc dosyasinin icerigi>"
-            echo ""
-            echo "Imza anahtari (public): keys/neox-repo-key.asc  (parmak izi: 620FCA4444B9A764E38692378A600E629DEB4D5E)"
-            exit 1
-          fi
-          printf '%s\n' "$NEOX_GPG_PRIVATE_KEY" > /tmp/neox-private-key.asc
-          chmod 600 /tmp/neox-private-key.asc
-          echo "NEOX_GPG_KEY_FILE=/tmp/neox-private-key.asc" >> "$GITHUB_ENV"
-
-      - name: "APT deposu derleniyor ve imzalanıyor"
+      - name: "APT deposu imzasiz olarak derleniyor"
         run: bash scripts/build-apt-repo.sh public
 
-      - name: "Depo uçtan uca test ediliyor (imza + apt update + indirme)"
+      - name: "Depo apt ile test ediliyor (apt update + paket indirme)"
         run: bash scripts/selftest-apt-repo.sh public
 
-      - name: "gh-pages dalına (GitHub Pages) yayınlanıyor"
+      - name: "gh-pages dalina (GitHub Pages) yayinlaniyor"
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

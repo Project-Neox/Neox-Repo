@@ -21,7 +21,7 @@ def main() -> int:
     arch = os.environ.get("NEOX_ARCH", "amd64")
     description = os.environ.get("NEOX_DESCRIPTION", "Neox APT Repository - Project-Neox")
 
-    skip = {"Release", "InRelease", "Release.gpg"}
+    skip = {"Release"}
     files = []
     for base, _, names in os.walk(dist_dir):
         for name in sorted(names):
