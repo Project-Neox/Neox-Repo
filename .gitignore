@@ -1,0 +1,11 @@
+# Derleme ciktisi (GitHub Pages'e CI tarafindan yayinlanir)
+/public/
+
+# Python
+__pycache__/
+*.pyc
+.venv*/
+
+# OS / editor
+.DS_Store
+*.swp

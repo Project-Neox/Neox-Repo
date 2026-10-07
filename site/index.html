@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neox APT Repository — Project-Neox Paket Deposu</title>
+<meta name="description" content="Project-Neox Debian APT deposu. Otomatik imzalı, GitHub Pages üzerinde çalışan paket deposu.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2'%3E%3Cpath d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <nav class="nav container">
+    <a class="brand" href="#top">
+      <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+        <line x1="12" y1="22.08" x2="12" y2="12"/>
+      </svg>
+      <span>Neox<span class="brand-accent">APT</span></span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menü">☰</button>
+    <div class="nav-links" id="navLinks">
+      <a href="#kurulum">Kurulum</a>
+      <a href="#paketler">Paketler</a>
+      <a href="#auto-update">Otomatik Güncelleme</a>
+      <a href="#yayinlama">Paket Yayınlama</a>
+      <a class="nav-cta" href="https://github.com/Project-Neox/Neox-Repo" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="container hero-inner">
+      <div class="hero-badge">
+        <span class="dot"></span> Debian / Ubuntu APT deposu · otomatik imzalı · GitHub Pages
+      </div>
+      <h1>Neox <span class="gradient-text">APT Repository</span></h1>
+      <p class="hero-sub">
+        Project-Neox GitHub deposu, aynı zamanda <strong>canlı bir Debian APT deposu</strong>.
+        <code>pool/</code> dizinine atılan her <code>.deb</code>, GitHub Actions tarafından otomatik
+        derlenir, GPG ile imzalanır ve bu sayfadan yayınlanır.
+      </p>
+
+      <div class="quick-install">
+        <code id="quickCmd">curl -fsSL https://project-neox.github.io/Neox-Repo/setup-repo.sh | sudo bash</code>
+        <button class="copy-btn" data-copy-target="quickCmd" title="Kopyala">⧉</button>
+      </div>
+
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#kurulum">Hemen Kur →</a>
+        <a class="btn btn-ghost" href="#paketler">Paketleri Gör</a>
+      </div>
+
+      <div class="stats" id="stats">
+        <div class="stat"><span class="stat-value" id="statCount">—</span><span class="stat-label">Paket</span></div>
+        <div class="stat"><span class="stat-value">stable</span><span class="stat-label">Suite</span></div>
+        <div class="stat"><span class="stat-value">main</span><span class="stat-label">Bileşen</span></div>
+        <div class="stat"><span class="stat-value" title="620FCA4444B9A764E38692378A600E629DEB4D5E">RSA-3072</span><span class="stat-label">GPG İmzası</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ KURULUM ============ -->
+  <section class="section" id="kurulum">
+    <div class="container">
+      <h2 class="section-title">Kurulum <span class="gradient-text">3 adım</span></h2>
+      <p class="section-sub">Herhangi bir Debian/Ubuntu sistemine depoyu ekle — bu sayfadaki komutlar kopyala-yapıştır çalışır.</p>
+
+      <div class="steps">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <h3>İmza anahtarını ekle</h3>
+          <p>Depo GPG ile imzalanır; apt bu anahtarı güvenirliste olarak kullanır.</p>
+          <div class="code-block">
+            <code id="cmd1">curl -fsSL https://project-neox.github.io/Neox-Repo/neox-repo.gpg | sudo tee /usr/share/keyrings/neox-repo.gpg &gt; /dev/null</code>
+            <button class="copy-btn" data-copy-target="cmd1" title="Kopyala">⧉</button>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <h3>Depoyu sources.list'e ekle</h3>
+          <p>Depo girdisi tek satırdır; suite <code>stable</code>, bileşen <code>main</code>.</p>
+          <div class="code-block">
+            <code id="cmd2">echo "deb [signed-by=/usr/share/keyrings/neox-repo.gpg] https://project-neox.github.io/Neox-Repo stable main" | sudo tee /etc/apt/sources.list.d/neox-repo.list</code>
+            <button class="copy-btn" data-copy-target="cmd2" title="Kopyala">⧉</button>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <h3>Güncelle ve kur</h3>
+          <p><code>apt update</code> imza ve checksum doğrulamalarını yapar; sonra paketi kur.</p>
+          <div class="code-block">
+            <code id="cmd3">sudo apt update &amp;&amp; sudo apt install neox-repo-setup</code>
+            <button class="copy-btn" data-copy-target="cmd3" title="Kopyala">⧉</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>⚡ Tek komutla kurulum:</strong> Yukarıdaki 3 adımı otomatik yapan script:
+        <div class="code-block">
+          <code id="cmd0">curl -fsSL https://project-neox.github.io/Neox-Repo/setup-repo.sh | sudo bash</code>
+          <button class="copy-btn" data-copy-target="cmd0" title="Kopyala">⧉</button>
+        </div>
+        <span class="callout-note">İstersen otomatik güncelleme timer'ini de kurar: <code>… | sudo bash -s -- --enable-auto-update</code></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PAKETLER ============ -->
+  <section class="section" id="paketler">
+    <div class="container">
+      <h2 class="section-title">Paketler <span class="gradient-text" id="paketCount"></span></h2>
+      <p class="section-sub">Depodaki güncel paketler — liste CI tarafından üretilen <code>packages.json</code> ile otomatik güncellenir.</p>
+      <div class="packages-grid" id="packagesGrid">
+        <div class="loading">Paketler yükleniyor…</div>
+      </div>
+      <div class="packages-fallback" id="packagesFallback" hidden>
+        <p>Paket listesi şu an yüklenemedi. Depoyu elle gez: <a href="dists/stable/main/binary-amd64/Packages">dists/stable/main/binary-amd64/Packages</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ OTOMATIK GUNCELLEME ============ -->
+  <section class="section" id="auto-update">
+    <div class="container">
+      <h2 class="section-title">Otomatik <span class="gradient-text">Güncelleme</span></h2>
+      <p class="section-sub">
+        Depoya yeni paket yüklendiğinde sistemin <strong>otomatik olarak</strong> haberi olsun.
+        <code>auto-update.sh</code>, sadece bu depoyu yeniler ve depodaki tüm paketleri kurar/günceller.
+      </p>
+
+      <div class="two-col">
+        <div class="feature-card">
+          <h3>🛠 Scripti kur</h3>
+          <p>Depo eklendikten sonra otomatik güncelleyiciyi sisteme kur:</p>
+          <div class="code-block">
+            <code id="cmd4">curl -fsSL https://project-neox.github.io/Neox-Repo/auto-update.sh | sudo tee /usr/local/bin/neox-repo-auto-update &gt; /dev/null &amp;&amp; sudo chmod +x /usr/local/bin/neox-repo-auto-update</code>
+            <button class="copy-btn" data-copy-target="cmd4" title="Kopyala">⧉</button>
+          </div>
+        </div>
+        <div class="feature-card">
+          <h3>⏰ systemd timer (önerilen)</h3>
+          <p>Her saat başı otomatik çalışsın — saatlik, açılışta telafi eder:</p>
+          <div class="code-block">
+            <code id="cmd5">curl -fsSL https://project-neox.github.io/Neox-Repo/neox-repo-auto-update.service | sudo tee /etc/systemd/system/neox-repo-auto-update.service &gt; /dev/null
+curl -fsSL https://project-neox.github.io/Neox-Repo/neox-repo-auto-update.timer | sudo tee /etc/systemd/system/neox-repo-auto-update.timer &gt; /dev/null
+sudo systemctl daemon-reload &amp;&amp; sudo systemctl enable --now neox-repo-auto-update.timer</code>
+            <button class="copy-btn" data-copy-target="cmd5" title="Kopyala">⧉</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>🔁 Alternatif — cron:</strong> <code>17 * * * * root /usr/local/bin/neox-repo-auto-update</code>
+        satırını <code>/etc/crontab</code>'e eklenebilirsin. Timer'ı izlemek için: <code>systemctl list-timers neox-repo-auto-update.timer</code>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ YAYINLAMA ============ -->
+  <section class="section" id="yayinlama">
+    <div class="container">
+      <h2 class="section-title">Depoya paket <span class="gradient-text">yayınlama</span></h2>
+      <p class="section-sub">Yeni bir paket yayınlamak için tek yapman gereken: <code>.deb</code> dosyasını <code>pool/</code> dizinine atıp push'lamak.</p>
+
+      <div class="pipeline" aria-label="Yayınlama akışı">
+        <div class="pipe-step"><div class="pipe-icon">📦</div><div><strong>pool/</strong><br><small>.deb dosyası push'lanır</small></div></div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step"><div class="pipe-icon">⚙️</div><div><strong>GitHub Actions</strong><br><small>metadata üretir + GPG imzalar</small></div></div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step"><div class="pipe-icon">🌐</div><div><strong>gh-pages</strong><br><small>depo + site yayınlanır</small></div></div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step"><div class="pipe-icon">💻</div><div><strong>Sistemler</strong><br><small>apt update ile otomatik alır</small></div></div>
+      </div>
+
+      <div class="code-block wide">
+        <code id="cmd6"># 1) paketi derle (ornek)
+dpkg-deb --build my-package ./pool/my-package_1.0.0_amd64.deb
+
+# 2) depoya ekle ve push'la - CI gerisini halleder
+git add pool/my-package_1.0.0_amd64.deb
+git commit -m "feat: my-package 1.0.0"
+git push</code>
+        <button class="copy-btn" data-copy-target="cmd6" title="Kopyala">⧉</button>
+      </div>
+
+      <div class="callout">
+        <strong>✅ Doğrulama:</strong> Her yayın öncesi CI, depoyu uçtan uca test eder
+        (GPG imza doğrulaması + <code>apt update</code> + paket indirme), bu sayfa ancak test geçerse güncellenir.
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div>
+      <div class="brand small">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+        </svg>
+        <span>Neox<span class="brand-accent">APT</span></span>
+      </div>
+      <p>Project-Neox · otomatik imzalı Debian APT deposu</p>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/Project-Neox/Neox-Repo" target="_blank" rel="noopener">GitHub Deposu</a>
+      <a href="neox-repo-key.asc">GPG Anahtarı (.asc)</a>
+      <a href="dists/stable/InRelease">InRelease</a>
+      <a href="packages.json">packages.json</a>
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <span>© 2026 Project Neox</span>
+    <span>GPG parmak izi: <code>620F CA44 44B9 A764 E386 9237 8A60 0E62 9DEB 4D5E</code></span>
+  </div>
+</footer>
+
+<div class="toast" id="toast">Kopyalandı ✓</div>
+
+<script src="app.js"></script>
+</body>
+</html>

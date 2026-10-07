@@ -1,0 +1,13 @@
+[Unit]
+Description=Neox APT deposu otomatik guncelleme zamanlayicisi
+
+[Timer]
+# Her saat basi calistir
+OnCalendar=hourly
+# Makine kapaliysa acildiginda telafi et
+Persistent=true
+# Rastgele 10 dakika gecikme (aynı anda cok makine varsa sunucuyu yormamak icin)
+RandomizedDelaySec=10min
+
+[Install]
+WantedBy=timers.target

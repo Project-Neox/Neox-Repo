@@ -1,0 +1,83 @@
+name: "APT Depo Yayını"
+
+# pool/'a .deb atıldığında (veya site/script değiştiğinde) APT deposunu derler,
+# GPG ile imzalar, uçtan uca test eder ve gh-pages dalına (GitHub Pages) yayınlar.
+on:
+  push:
+    branches: [main, "arena/**"]
+    paths:
+      - "pool/**"
+      - "site/**"
+      - "scripts/**"
+      - "keys/**"
+      - ".github/workflows/apt-repo.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apt-repo-publish
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    name: "Derle, imzala, test et, yayınla"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Depoyu çek"
+        uses: actions/checkout@v4
+
+      - name: "Araçlar kuruluyor (dpkg-dev, apt-utils, gnupg)"
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev apt-utils gnupg python3
+
+      - name: "GPG imza anahtarı hazırlanıyor"
+        env:
+          NEOX_GPG_PRIVATE_KEY: ${{ secrets.NEOX_GPG_PRIVATE_KEY }}
+        run: |
+          if [ -z "$NEOX_GPG_PRIVATE_KEY" ]; then
+            echo "::error::NEOX_GPG_PRIVATE_KEY secret'i eksik — depo GPG ile imzalanamaz!"
+            echo ""
+            echo "Cozum (repo admini tarafindan bir kez yapilir):"
+            echo "  gh secret set NEOX_GPG_PRIVATE_KEY --repo Project-Neox/Neox-Repo < neox-private-key.asc"
+            echo "veya GitHub UI: Settings → Secrets and variables → Actions → New repository secret"
+            echo "  Name: NEOX_GPG_PRIVATE_KEY   Value: <neox-private-key.asc dosyasinin icerigi>"
+            echo ""
+            echo "Imza anahtari (public): keys/neox-repo-key.asc  (parmak izi: 620FCA4444B9A764E38692378A600E629DEB4D5E)"
+            exit 1
+          fi
+          printf '%s\n' "$NEOX_GPG_PRIVATE_KEY" > /tmp/neox-private-key.asc
+          chmod 600 /tmp/neox-private-key.asc
+          echo "NEOX_GPG_KEY_FILE=/tmp/neox-private-key.asc" >> "$GITHUB_ENV"
+
+      - name: "APT deposu derleniyor ve imzalanıyor"
+        run: bash scripts/build-apt-repo.sh public
+
+      - name: "Depo uçtan uca test ediliyor (imza + apt update + indirme)"
+        run: bash scripts/selftest-apt-repo.sh public
+
+      - name: "gh-pages dalına (GitHub Pages) yayınlanıyor"
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --depth=1 origin gh-pages || true
+          if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+            git checkout -B gh-pages origin/gh-pages
+          else
+            git checkout --orphan gh-pages
+            git rm -rf --quiet . || true
+          fi
+          # gh-pages icerigini staging (public/) ile esitle
+          find . -mindepth 1 -maxdepth 1 ! -name 'public' ! -name '.git' -exec rm -rf {} +
+          cp -r public/. .
+          rm -rf public
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Degisiklik yok, yayin atlaniyor"
+          else
+            git commit -m "APT deposu guncellendi: $(date -u '+%Y-%m-%d %H:%M UTC')"
+            git push origin gh-pages
+            echo "Yayin tamamlandi: https://project-neox.github.io/Neox-Repo/"
+          fi
