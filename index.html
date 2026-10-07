@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Neox APT Repository — Project-Neox Paket Deposu</title>
-<meta name="description" content="Project-Neox Debian APT deposu. Otomatik imzalı, GitHub Pages üzerinde çalışan paket deposu.">
+<meta name="description" content="Project-Neox imzasız Debian APT deposu. GitHub Pages üzerinden yayınlanan paket deposu.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2'%3E%3Cpath d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -38,13 +38,13 @@
     <div class="hero-glow" aria-hidden="true"></div>
     <div class="container hero-inner">
       <div class="hero-badge">
-        <span class="dot"></span> Debian / Ubuntu APT deposu · otomatik imzalı · GitHub Pages
+        <span class="dot"></span> Debian / Ubuntu APT deposu · imzasız · GitHub Pages
       </div>
       <h1>Neox <span class="gradient-text">APT Repository</span></h1>
       <p class="hero-sub">
         Project-Neox GitHub deposu, aynı zamanda <strong>canlı bir Debian APT deposu</strong>.
-        <code>pool/</code> dizinine atılan her <code>.deb</code>, GitHub Actions tarafından otomatik
-        derlenir, GPG ile imzalanır ve bu sayfadan yayınlanır.
+        <code>pool/</code> dizinine atılan her <code>.deb</code> için GitHub Actions APT metadata'sını
+        hazırlar, depoyu test eder ve bu sayfadan imzasız olarak yayınlar.
       </p>
 
       <div class="quick-install">
@@ -61,7 +61,7 @@
         <div class="stat"><span class="stat-value" id="statCount">—</span><span class="stat-label">Paket</span></div>
         <div class="stat"><span class="stat-value">stable</span><span class="stat-label">Suite</span></div>
         <div class="stat"><span class="stat-value">main</span><span class="stat-label">Bileşen</span></div>
-        <div class="stat"><span class="stat-value" title="620FCA4444B9A764E38692378A600E629DEB4D5E">RSA-3072</span><span class="stat-label">GPG İmzası</span></div>
+        <div class="stat"><span class="stat-value">İmzasız</span><span class="stat-label">APT Deposu</span></div>
       </div>
     </div>
   </section>
@@ -75,30 +75,30 @@
       <div class="steps">
         <div class="step-card">
           <div class="step-num">1</div>
-          <h3>İmza anahtarını ekle</h3>
-          <p>Depo GPG ile imzalanır; apt bu anahtarı güvenirliste olarak kullanır.</p>
+          <h3>Depoyu ekle</h3>
+          <p>Depo GPG imzası kullanmaz; <code>trusted=yes</code> imzasız kaynağın kullanılmasına izin verir.</p>
           <div class="code-block">
-            <code id="cmd1">curl -fsSL https://project-neox.github.io/Neox-Repo/neox-repo.gpg | sudo tee /usr/share/keyrings/neox-repo.gpg &gt; /dev/null</code>
+            <code id="cmd1">echo "deb [trusted=yes] https://project-neox.github.io/Neox-Repo stable main" | sudo tee /etc/apt/sources.list.d/neox-repo.list</code>
             <button class="copy-btn" data-copy-target="cmd1" title="Kopyala">⧉</button>
           </div>
         </div>
 
         <div class="step-card">
           <div class="step-num">2</div>
-          <h3>Depoyu sources.list'e ekle</h3>
-          <p>Depo girdisi tek satırdır; suite <code>stable</code>, bileşen <code>main</code>.</p>
+          <h3>Paket listesini güncelle</h3>
+          <p><code>apt update</code> depo metadata'sını ve paket checksum'larını kontrol eder.</p>
           <div class="code-block">
-            <code id="cmd2">echo "deb [signed-by=/usr/share/keyrings/neox-repo.gpg] https://project-neox.github.io/Neox-Repo stable main" | sudo tee /etc/apt/sources.list.d/neox-repo.list</code>
+            <code id="cmd2">sudo apt update</code>
             <button class="copy-btn" data-copy-target="cmd2" title="Kopyala">⧉</button>
           </div>
         </div>
 
         <div class="step-card">
           <div class="step-num">3</div>
-          <h3>Güncelle ve kur</h3>
-          <p><code>apt update</code> imza ve checksum doğrulamalarını yapar; sonra paketi kur.</p>
+          <h3>Paketi kur</h3>
+          <p>Depodaki paketleri <code>apt</code> ile kurabilirsin.</p>
           <div class="code-block">
-            <code id="cmd3">sudo apt update &amp;&amp; sudo apt install neox-repo-setup</code>
+            <code id="cmd3">sudo apt install neox-repo-setup</code>
             <button class="copy-btn" data-copy-target="cmd3" title="Kopyala">⧉</button>
           </div>
         </div>
@@ -111,6 +111,7 @@
           <button class="copy-btn" data-copy-target="cmd0" title="Kopyala">⧉</button>
         </div>
         <span class="callout-note">İstersen otomatik güncelleme timer'ini de kurar: <code>… | sudo bash -s -- --enable-auto-update</code></span>
+        <span class="callout-note">Güvenlik: <code>trusted=yes</code> yayıncı imzasını doğrulamaz; yalnızca güvendiğin depolar için kullan.</span>
       </div>
     </div>
   </section>
@@ -175,7 +176,7 @@ sudo systemctl daemon-reload &amp;&amp; sudo systemctl enable --now neox-repo-au
       <div class="pipeline" aria-label="Yayınlama akışı">
         <div class="pipe-step"><div class="pipe-icon">📦</div><div><strong>pool/</strong><br><small>.deb dosyası push'lanır</small></div></div>
         <div class="pipe-arrow">→</div>
-        <div class="pipe-step"><div class="pipe-icon">⚙️</div><div><strong>GitHub Actions</strong><br><small>metadata üretir + GPG imzalar</small></div></div>
+        <div class="pipe-step"><div class="pipe-icon">⚙️</div><div><strong>GitHub Actions</strong><br><small>metadata üretir ve test eder</small></div></div>
         <div class="pipe-arrow">→</div>
         <div class="pipe-step"><div class="pipe-icon">🌐</div><div><strong>gh-pages</strong><br><small>depo + site yayınlanır</small></div></div>
         <div class="pipe-arrow">→</div>
@@ -195,7 +196,7 @@ git push</code>
 
       <div class="callout">
         <strong>✅ Doğrulama:</strong> Her yayın öncesi CI, depoyu uçtan uca test eder
-        (GPG imza doğrulaması + <code>apt update</code> + paket indirme), bu sayfa ancak test geçerse güncellenir.
+        (imzasız kaynakla <code>apt update</code> + paket indirme), bu sayfa ancak test geçerse güncellenir.
       </div>
     </div>
   </section>
@@ -211,18 +212,17 @@ git push</code>
         </svg>
         <span>Neox<span class="brand-accent">APT</span></span>
       </div>
-      <p>Project-Neox · otomatik imzalı Debian APT deposu</p>
+      <p>Project-Neox · imzasız Debian APT deposu</p>
     </div>
     <div class="footer-links">
       <a href="https://github.com/Project-Neox/Neox-Repo" target="_blank" rel="noopener">GitHub Deposu</a>
-      <a href="neox-repo-key.asc">GPG Anahtarı (.asc)</a>
-      <a href="dists/stable/InRelease">InRelease</a>
+      <a href="dists/stable/Release">Release metadata</a>
       <a href="packages.json">packages.json</a>
     </div>
   </div>
   <div class="container footer-bottom">
     <span>© 2026 Project Neox</span>
-    <span>GPG parmak izi: <code>620F CA44 44B9 A764 E386 9237 8A60 0E62 9DEB 4D5E</code></span>
+    <span>İmzasız APT deposu · <code>trusted=yes</code></span>
   </div>
 </footer>
 

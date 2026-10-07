@@ -12,15 +12,14 @@ mkdir -p "$PKG/DEBIAN" "$PKG/usr/bin" "$PKG/usr/share/doc/neox-repo-setup"
 
 cat > "$PKG/DEBIAN/control" <<'EOF'
 Package: neox-repo-setup
-Version: 1.0.0
+Version: 1.0.1
 Section: admin
 Priority: optional
 Architecture: all
 Maintainer: Project Neox <apt@project-neox.github.io>
 Depends: curl
 Description: Neox APT deposunu Debian/Ubuntu sistemine ekler
- Neox APT deposunu (https://project-neox.github.io/Neox-Repo) ve
- GPG imzalama anahtarini bu sisteme kurar.
+ Neox APT deposunu (https://project-neox.github.io/Neox-Repo) bu sisteme ekler.
  .
  Kurulumdan sonra `sudo apt update` ile depodaki paketler kullanilabilir.
 EOF
@@ -44,7 +43,7 @@ License: MIT
 EOF
 
 mkdir -p "$ROOT/pool"
-OUT="$ROOT/pool/neox-repo-setup_1.0.0_all.deb"
+OUT="$ROOT/pool/neox-repo-setup_1.0.1_all.deb"
 dpkg-deb --root-owner-group --build "$PKG" "$OUT"
-echo "Olusturuldu: pool/neox-repo-setup_1.0.0_all.deb"
+echo "Olusturuldu: pool/neox-repo-setup_1.0.1_all.deb"
 dpkg-deb --info "$OUT" | head -12
