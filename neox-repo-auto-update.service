@@ -1,0 +1,9 @@
+[Unit]
+Description=Neox APT deposundan paketleri otomatik kur/guncelle
+Documentation=https://github.com/Project-Neox/Neox-Repo
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/neox-repo-auto-update

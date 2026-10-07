@@ -1,0 +1,18 @@
+Package: neox-repo-setup
+Architecture: all
+Version: 1.0.1
+Priority: optional
+Section: admin
+Maintainer: Project Neox <apt@project-neox.github.io>
+Depends: curl
+Filename: pool/neox-repo-setup_1.0.1_all.deb
+Size: 2132
+MD5sum: c52fed6338baaf25b802a9fb7f06bdcd
+SHA1: e9be9455880a178a06322a137243d02d9df3da93
+SHA256: 0247eed22fe4833c66dae9c5744ec451fd977936397863855060876355c02841
+SHA512: 545c3c13fc6aaa391fe2865038a43af3373c417e226078aa9e9c65d5cb4431d4742033640b76e3aad5ea46fb11a0f5b86ac2433229cb93fa80f3dac8934d4963
+Description: Neox APT deposunu Debian/Ubuntu sistemine ekler
+ Neox APT deposunu (https://project-neox.github.io/Neox-Repo) bu sisteme ekler.
+ .
+ Kurulumdan sonra `sudo apt update` ile depodaki paketler kullanilabilir.
+
