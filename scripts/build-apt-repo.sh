@@ -73,7 +73,8 @@ else
 fi
 
 # 4) Depo sitesi (HTML/CSS/JS dosyalari repoda kok dizindedir)
-cp "$ROOT/index.html" "$ROOT/style.css" "$ROOT/app.js" "$STAGING/"
+cp "$ROOT/index.html" "$ROOT/style.css" "$ROOT/app.js" \
+    "$ROOT/archive-upload.html" "$STAGING/"
 
 # 5) Kurulum/guncelleme scriptleri ve site paket listesi
 cp "$ROOT/scripts/setup-repo.sh" "$STAGING/setup-repo.sh"

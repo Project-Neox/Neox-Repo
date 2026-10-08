@@ -1,0 +1,85 @@
+name: "DEOX .deb dosyalarını Internet Archive'a yükle"
+
+# deoxpool/ içindeki paketler push edildiğinde arşive gönderilir.
+# İlk kurulumdan sonra mevcut paketleri göndermek için workflow_dispatch kullanın.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "deox-repo/deoxpool/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: archive-deb-upload-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    name: "Paketleri Archive.org'a aktar"
+    runs-on: ubuntu-latest
+    env:
+      IA_IDENTIFIER: ${{ vars.IA_IDENTIFIER }}
+    steps:
+      - name: "Gizli ayarları kontrol et"
+        shell: bash
+        env:
+          IA_S3_ACCESS_KEY: ${{ secrets.IA_S3_ACCESS_KEY }}
+          IA_S3_SECRET_KEY: ${{ secrets.IA_S3_SECRET_KEY }}
+        run: |
+          if [[ -z "$IA_S3_ACCESS_KEY" || -z "$IA_S3_SECRET_KEY" ]]; then
+            echo "::error::IA_S3_ACCESS_KEY ve IA_S3_SECRET_KEY Actions secrets olarak eklenmeli."
+            exit 1
+          fi
+          if [[ ! "$IA_IDENTIFIER" =~ ^[A-Za-z0-9._-]+$ ]]; then
+            echo "::error::Repository variable IA_IDENTIFIER geçerli bir Archive.org item ID olmalı."
+            exit 1
+          fi
+
+      - name: "Depoyu ve Git LFS paketlerini çek"
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: "deoxpool içindeki .deb dosyalarını yükle"
+        shell: bash
+        env:
+          IA_S3_ACCESS_KEY: ${{ secrets.IA_S3_ACCESS_KEY }}
+          IA_S3_SECRET_KEY: ${{ secrets.IA_S3_SECRET_KEY }}
+        run: |
+          shopt -s nullglob
+          packages=(deox-repo/deoxpool/*.deb)
+          if (( ${#packages[@]} == 0 )); then
+            echo "deoxpool içinde yüklenecek .deb bulunamadı."
+            exit 0
+          fi
+
+          for package in "${packages[@]}"; do
+            filename="${package##*/}"
+            encoded_filename="$(python3 -c 'import sys; from urllib.parse import quote; print(quote(sys.argv[1], safe=""))' "$filename")"
+            echo "Archive.org'a yükleniyor: $filename"
+
+            curl \
+              --proto '=https' \
+              --proto-redir '=https' \
+              --location-trusted \
+              --fail \
+              --show-error \
+              --progress-bar \
+              --retry 5 \
+              --retry-delay 5 \
+              --connect-timeout 30 \
+              --max-time 3600 \
+              --header "Authorization: LOW ${IA_S3_ACCESS_KEY}:${IA_S3_SECRET_KEY}" \
+              --header "x-amz-auto-make-bucket:1" \
+              --header "x-archive-meta01-collection:opensource" \
+              --header "x-archive-meta-mediatype:software" \
+              --header "x-archive-meta-title:Neox DEOX Debian packages" \
+              --header "x-archive-queue-derive:0" \
+              --upload-file "$package" \
+              "https://s3.us.archive.org/${IA_IDENTIFIER}/${encoded_filename}"
+          done
+
+          echo "Yükleme tamamlandı: https://archive.org/details/${IA_IDENTIFIER}"

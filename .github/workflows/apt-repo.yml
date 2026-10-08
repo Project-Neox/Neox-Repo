@@ -11,6 +11,7 @@ on:
       - "index.html"
       - "app.js"
       - "style.css"
+      - "archive-upload.html"
       - ".github/workflows/apt-repo.yml"
   workflow_dispatch:
 
