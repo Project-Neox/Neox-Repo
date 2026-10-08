@@ -120,6 +120,50 @@ bash scripts/selftest-apt-repo.sh public
 | `scripts/auto-update.sh` | Otomatik paket kur/güncelleme |
 | `.github/workflows/apt-repo.yml` | Derleme, test ve yayın pipeline'ı |
 
+## 🔮 DEOX — Topluluk Paket Yöneticisi (AUR benzeri)
+
+Bu depo aynı zamanda **DEOX** paket yöneticisi için istemci ve paket havuzu
+kodlarını içerir. DEOX; Debian tabanlı sistemler için AUR benzeri bir topluluk
+paket yönetim sistemidir — **yalnızca hazır `.deb` dağıtımı** yapar, kaynak
+koddan derleme yapmaz.
+
+```text
+├── deox-client/          ← kullanıcının bilgisayarındaki terminal istemcisi
+│   ├── deox              ← çalıştırılabilir dosya (python3 ./deox --help)
+│   ├── src/              ← main, database, downloader, installer, resolver, ...
+│   ├── config/           ← deox.conf ve repos.conf şablonları
+│   ├── install.sh        ← sistem geneline kurulum (sudo ./install.sh)
+│   └── README.md         ← Türkçe kullanım kılavuzu
+└── deox-repo/            ← paket havuzu (GitHub'daki depo yapısı)
+    ├── deoxpool/         ← .deb dosyaları buraya atılır
+    ├── db/deox.db        ← repo_scanner ile üretilen SQLite veritabanı
+    └── samples/          ← örnek paketler (deox-hello, deox-libcore)
+```
+
+Hızlı başlangıç:
+
+```bash
+cd deox-client
+sudo ./install.sh                 # sisteme kur
+deox -Sy                          # depo veritabanını senkronize et
+deox -Ss htop                     # paket ara
+sudo deox -S htop                 # paket kur
+```
+
+Depo sahibi için paket ekleme:
+
+```bash
+cp paket_1.0_amd64.deb deox-repo/deoxpool/
+cd deox-client
+python3 -m src.repo_scanner --pool ../deox-repo/deoxpool --db ../deox-repo/db/deox.db
+git add deox-repo/deoxpool deox-repo/db/deox.db && git commit -m "paket ekle" && git push
+```
+
+Tüm komutlar `--json` ile JSON çıktısı üretir; `sync` ve `local` SQLite
+veritabanları ileride yapılacak GUI uygulaması tarafından doğrudan okunabilir.
+Ayrıntılar için `deox-client/README.md` ve `deox-repo/README.md` dosyalarına
+bakın.
+
 ## 📄 Lisans
 
 MIT

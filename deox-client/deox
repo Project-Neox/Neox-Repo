@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+DEOX istemci başlatıcısı.
+
+Doğrudan çalıştırma:
+    ./deox --help
+
+Sistem geneline kurulum (install.sh) sonrası /usr/local/bin/deox ile
+aynı şekilde çalışır.
+"""
+
+import os
+import sys
+
+# İstemci dizinini (deox-client/) sys.path'e ekle ve src paketini başlat
+CLIENT_DIR = os.path.dirname(os.path.abspath(__file__))
+if CLIENT_DIR not in sys.path:
+    sys.path.insert(0, CLIENT_DIR)
+
+from src.main import main  # noqa: E402
+
+if __name__ == "__main__":
+    sys.exit(main())

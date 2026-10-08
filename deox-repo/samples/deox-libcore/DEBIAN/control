@@ -1,0 +1,11 @@
+Package: deox-libcore
+Version: 1.0.0
+Architecture: amd64
+Maintainer: DEOX Örnek <ornek@deox.local>
+Section: libs
+Priority: optional
+Homepage: https://github.com/Project-Neox/Neox-Repo
+License: MIT
+Description: DEOX örnek çekirdek kitaplığı
+ deox-hello paketinin bağımlılık çözümleme testinde kullanılan
+ sahte bir kitaplık paketidir.

@@ -1,0 +1,2 @@
+Bu dosya deox-libcore örnek paketi tarafından kurulur.
+DEOX bağımlılık çözücü testinde kullanılır.

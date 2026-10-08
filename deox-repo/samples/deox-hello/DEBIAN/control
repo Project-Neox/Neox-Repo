@@ -1,0 +1,12 @@
+Package: deox-hello
+Version: 1.1.0
+Architecture: amd64
+Maintainer: DEOX Örnek <ornek@deox.local>
+Section: utils
+Priority: optional
+Depends: deox-libcore
+Homepage: https://github.com/Project-Neox/Neox-Repo
+License: MIT
+Description: DEOX için örnek paket
+ DEOX paket yöneticisinin test edilmesi için kullanılan basit bir
+ "merhaba dünya" paketi. deox-libcore paketine bağımlıdır.

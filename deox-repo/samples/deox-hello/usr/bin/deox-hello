@@ -1,0 +1,5 @@
+#!/bin/sh
+# DEOX örnek paket — deox-hello
+# DEOX paket yöneticisi üzerinden kurulan ilk paketin testi için.
+echo "Merhaba DEOX! 👋 deox-hello 1.1.0 kuruldu ve çalıştı."
+echo "Bağımlılık testi: deox-libcore kurulu."
