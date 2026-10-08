@@ -294,6 +294,23 @@ cp config/*.conf $DEOX_ROOT/etc/deox/
 ./deox -Q
 ```
 
+### Otomatik regresyon testi
+
+`regresyon.sh`, 54 uçtan uca kontrolü izole bir ortamda çalıştırır
+(sync, kurulum, bağımlılık çözümü, güncelleme, kaldırma, rollback,
+snapshot, JSON çıktılar, hata durumları vb.). Yerel bir depo sunucusu ve
+`../deox-repo` içinde üretilmiş paketler gerekir:
+
+```bash
+# 1) örnek paketleri derle + veritabanını üret (deox-repo'dan)
+cd ../deox-repo/samples && ./build.sh ../deoxpool && cd ../../deox-client
+python3 -m src.repo_scanner --pool ../deox-repo/deoxpool --db ../deox-repo/db/deox.db
+# 2) depoyu yerel HTTP ile servis et
+cd ../deox-repo && python3 -m http.server 8765 &
+# 3) regresyonu çalıştır
+cd ../deox-client && ./regresyon.sh
+```
+
 ## Depo sahibi misiniz?
 
 Paket havuzu ve `repo_scanner` kullanımı için bkz: `../deox-repo/README.md`

@@ -255,11 +255,14 @@ class Installer:
         name = entry["package_name"]
 
         if action == "install":
-            # kurulumu geri al → paketi kaldır
+            # Kurulumu geri al → paketi kaldır. dpkg, kendisine bağımlı
+            # kurulu paketler varken kaldırmayı reddeder; bu yüzden önce
+            # pakete bağımlı paketler (dependents) kaldırılır.
+            targets = self._dependents_first(name)
             ui.info("#%s geri alınıyor: %s kaldırılacak"
-                    % (history_id, name))
+                    % (history_id, ", ".join(targets)))
             return {"action": "install→remove",
-                    "packages": self.remove([name])}
+                    "packages": self.remove(targets)}
 
         if action in ("remove", "update"):
             # kaldırmayı/güncellemeyi geri al → eski sürümü yeniden kur
@@ -277,6 +280,42 @@ class Installer:
             return {"action": "%s→reinstall" % action, "packages": [name]}
 
         raise InstallError("%s işlemi geri alınamıyor." % action)
+
+    def _dep_groups_of(self, pkg_name):
+        """Bir paketin bağımlılık gruplarını ayrıştırır (alternatiflerle)."""
+        groups = []
+        for row in self.sync_db.deps_of(pkg_name, dep_type="depends"):
+            parsed = utils.parse_depends(row["dep_name"])
+            if parsed:
+                groups.append(parsed[0])
+        return groups
+
+    def _dependents_first(self, name):
+        """
+        name'e bağımlı kurulu paketleri, bağımlılar ÖNCE gelecek şekilde
+        sıralar (en sonda name). dpkg'nin kaldırma sırası için gereklidir.
+        """
+        installed = {i["name"] for i in self.local_db.get_installed()}
+        installed.add(name)
+        order = []
+        seen = set()
+
+        def visit(pkg):
+            if pkg in seen:
+                return
+            seen.add(pkg)
+            # bu pakete bağımlı kurulu paketleri önce gez
+            for other in sorted(installed):
+                if other == pkg or other in seen:
+                    continue
+                for group in self._dep_groups_of(other):
+                    if any(dep == pkg for dep, _op, _ver in group):
+                        visit(other)
+                        break
+            order.append(pkg)
+
+        visit(name)
+        return order
 
     def _obtain_deb(self, pkg):
         """Paketin .deb dosyasını önbellekten veya depodan bulur/indirir."""

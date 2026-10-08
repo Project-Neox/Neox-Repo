@@ -504,7 +504,7 @@ def cmd_stats(ctx):
     }
     if not ui.JSON_MODE:
         s = data["sync"]
-        ui._emit(ui.header("DEOX İstatistikleri"))
+        ui.header("DEOX İstatistikleri")
         ui._emit("  Depodaki paket sayısı : %d" % s["packages"])
         ui._emit("  Toplam bağımlılık     : %d" % s["dependencies"])
         ui._emit("  Toplam indirme        : %d" % s["total_downloads"])
@@ -514,12 +514,12 @@ def cmd_stats(ctx):
         ui._emit("  Geçmiş kaydı          : %d" % data["local"]["history_entries"])
         ui._emit("  Önbellek              : %d dosya, %s"
                  % (data["cache"]["files"], ui.size_s(data["cache"]["size_bytes"])))
-        ui._emit(ui.header("En çok indirilenler"))
+        ui.header("En çok indirilenler")
         for p in data["top_downloads"]:
             ui._emit("  %s %s — %d indirme"
                      % (ui.pkg(p["name"]), ui.ver(p["version"]),
                         p["download_count"]))
-        ui._emit(ui.header("Son eklenenler"))
+        ui.header("Son eklenenler")
         for p in data["recent"]:
             ui._emit("  %s %s (%s)"
                      % (ui.pkg(p["name"]), ui.ver(p["version"]),
@@ -539,7 +539,7 @@ def cmd_doctor(ctx):
             line += ui.dim(" — %s" % detail)
         ui._emit(line)
 
-    ui._emit(ui.header("DEOX sistem kontrolü (--doctor)"))
+    ui.header("DEOX sistem kontrolü (--doctor)")
     check("root yetkisi", utils.is_root() or bool(utils.ROOT_PREFIX),
           "test modu (DEOX_ROOT)" if utils.ROOT_PREFIX else "")
     check("dpkg mevcut", shutil.which("dpkg") is not None)

@@ -103,8 +103,8 @@ def size_s(nbytes):
 
 
 def header(text):
-    """Başlık: mor/bold."""
-    return bold(magenta(text))
+    """Başlık yazdırır: mor/bold."""
+    _emit(bold(magenta(text)))
 
 
 # ---------------------------------------------------------------------------
