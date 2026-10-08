@@ -1,24 +1,24 @@
 Architectures: amd64
 Codename: stable
 Components: main
-Date: Thu, 08 Oct 2026 14:17:57 +0000
+Date: Thu, 08 Oct 2026 14:36:06 +0000
 Description: Neox APT Repository - Project-Neox
 Label: Neox-Repo
 Origin: Neox
 Suite: stable
 MD5Sum:
- 741a183a7872c124f939164409d815df              185 Release
+ 457e6dc11cc83e0654e66f0436ec7533              185 Release
  528c431ec0df41752c7de8ab65fb7c64              733 main/binary-amd64/Packages
- 2837545ad2b43562b844438700400686              515 main/binary-amd64/Packages.gz
+ bcae3fcc80a2b5402ab2f11daf64f4e2              515 main/binary-amd64/Packages.gz
 SHA1:
- 644d765d4f1aecd3d09a8c8b377ff0850c615b10              185 Release
+ b185b409a748b7a0f34327d8b335d912e6d09a33              185 Release
  4f4bad155a6e50edcb3fdc228a82e16f9758c9b1              733 main/binary-amd64/Packages
- 201a9b38365eb076f6db24201ec626a8962a4314              515 main/binary-amd64/Packages.gz
+ 9bb9efdece84566eea009ef444ef1b7dc1c1e6cd              515 main/binary-amd64/Packages.gz
 SHA256:
- 70e64f4cd97a61c239b89eb74c7888059f8c983f99cc19cad2dd556db1d8af34              185 Release
+ 3f82875fa0f995fe3c03bd01a7de2ea97b1d11461f679d54e2b6e4640e97af7e              185 Release
  9afec64400841f5470ec1caaef783837a4dbcadea77dae9ac9cdd0c63937966e              733 main/binary-amd64/Packages
- d49e4f2654b875eba8ad4ebba9f0cc8feb6466952f6adee73eef9ea790f37560              515 main/binary-amd64/Packages.gz
+ 3cd160b52c9e22969282e0f86b4de9afbd8c3f8cd30802737b637ec51184b470              515 main/binary-amd64/Packages.gz
 SHA512:
- 109f55d218d1d7b9fd54487de6b038d05c3b5dafec87d72214854901b4f428bb92c9105b6848f47fab72eff0a5f39a7a5235e2e25a1d8979e4c7a696cdf739b5              185 Release
+ ba3619289f325b2495e4a725bd3a2db93d27a8ec9cf7cb7e744c33d7414111a187ac20bfad1f27eb492abfb0242d96f219909773855a328653bba86671c4c228              185 Release
  39dd7076590d6369ac3d403ac721e12f3acaa0b9b622d7c3c4dfc1804d2fc652e3d8241623197987bfcbe579cecd77b50e6e4d6990649d2ab0000ae883ec4d35              733 main/binary-amd64/Packages
- 7bf516b07e4a74c36c668b372e436519f468585b3e13d7924882231ce33f8aee60cc60c19ac04fdad11051e21f1e274a4a09ba7de19d03a627dd6e6142b91591              515 main/binary-amd64/Packages.gz
+ aa34f459f2708a46bd0564a46d22d4714697753fcf33dabe494872d873532338d69d69d3e8b6a728d0b5ec340a53cfc8dec979727c6836cbbf66de628e470048              515 main/binary-amd64/Packages.gz
