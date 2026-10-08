@@ -136,7 +136,7 @@ koddan derleme yapmaz.
 │   └── README.md         ← Türkçe kullanım kılavuzu
 └── deox-repo/            ← paket havuzu (GitHub'daki depo yapısı)
     ├── deoxpool/         ← .deb dosyaları buraya atılır
-    ├── db/deox.db        ← repo_scanner ile üretilen SQLite veritabanı
+    ├── db/deox.db        ← .deb dosya adlarından otomatik üretilen SQLite veritabanı
     └── samples/          ← örnek paketler (deox-hello, deox-libcore)
 ```
 
@@ -156,8 +156,17 @@ Depo sahibi için paket ekleme:
 cp paket_1.0_amd64.deb deox-repo/deoxpool/
 cd deox-client
 python3 -m src.repo_scanner --pool ../deox-repo/deoxpool --db ../deox-repo/db/deox.db
-git add deox-repo/deoxpool deox-repo/db/deox.db && git commit -m "paket ekle" && git push
+cd ..
+git add deox-repo/deoxpool deox-repo/db/deox.db
+git commit -m "paket ekle"
+git push
 ```
+
+`main` dalına push sonrası GitHub Actions deox.db'yi günceller ve paketleri,
+IA S3 anahtarları GitHub Actions secrets olarak tanımlıysa, Internet Archive'a da
+yükler. Anahtar adları ve ayarlar için `deox-repo/README.md` dosyasına bakın;
+API key'leri HTML/GitHub Pages'e eklemeyin. Pages yükleme rehberi:
+`https://project-neox.github.io/Neox-Repo/archive-upload.html`.
 
 Tüm komutlar `--json` ile JSON çıktısı üretir; `sync` ve `local` SQLite
 veritabanları ileride yapılacak GUI uygulaması tarafından doğrudan okunabilir.

@@ -1,0 +1,51 @@
+name: "DEOX paket veritabanı"
+
+# deoxpool/ içindeki .deb dosyaları değiştiğinde db/deox.db dosyasını
+# dosya adlarından yeniden üretir ve aynı dala commit eder.
+on:
+  push:
+    branches: [main, "arena/**"]
+    paths:
+      - "deox-repo/deoxpool/**"
+      - "deox-client/src/repo_scanner.py"
+      - "deox-client/src/database.py"
+      - "deox-client/src/security.py"
+      - "deox-client/src/utils.py"
+      - ".github/workflows/deox-db.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deox-db-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: "deox.db oluştur ve güncelle"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Depoyu ve Git LFS paketlerini çek"
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: "deoxpool dosya adlarından veritabanını üret"
+        working-directory: deox-client
+        run: >-
+          python3 -m src.repo_scanner
+          --pool ../deox-repo/deoxpool
+          --db ../deox-repo/db/deox.db
+
+      - name: "Güncel veritabanını dala commit et"
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add deox-repo/db/deox.db
+          if git diff --cached --quiet; then
+            echo "deox.db güncel; commit gerekmiyor"
+          else
+            git commit -m "DEOX paket veritabanını güncelle [skip ci]"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi

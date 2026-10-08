@@ -2,9 +2,10 @@
 """
 DEOX repo tarayıcı (repo sahibi için).
 
-deoxpool/ altındaki tüm .deb dosyalarını tarar:
-  - dpkg-deb ile metadata çıkarır (Package, Version, Depends vb.)
-  - SHA256/MD5 checksum ve boyut hesaplar
+deoxpool/ altındaki .deb dosyalarını dosya adlarından indeksler:
+  - Paket adı, sürümü ve mimari <paket>_<sürüm>_<mimari>.deb biçiminden alınır
+  - .deb içindeki kontrol alanları varsa açıklama/bağımlılık gibi ek bilgiler okunur
+  - SHA256/MD5 checksum ve boyut hesaplanır (Git LFS pointer'ları da desteklenir)
   - db/deox.db SQLite veritabanına yazar
 
 Bu db dosyası repo'ya commit edilir; istemciler `deox -Sy` ile indirir.
@@ -21,6 +22,7 @@ Oy/indirme-sayısı/işaret bilgileri yeniden taramada paket adıyla taşınır.
 import argparse
 import glob
 import os
+import re
 import sys
 
 try:
@@ -41,30 +43,112 @@ DEP_FIELDS = (
     ("Provides", "provides"),
 )
 
+_PACKAGE_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9+.-]*$")
+_ARCHITECTURE_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+_LFS_VERSION = "version https://git-lfs.github.com/spec/v1"
+_LFS_OID_RE = re.compile(r"^oid sha256:([0-9a-fA-F]{64})$")
+_LFS_SIZE_RE = re.compile(r"^size ([0-9]+)$")
+
+
+def parse_deb_filename(path):
+    """Dosya adından (paket adı, sürüm, mimari) bilgisini alır.
+
+    Beklenen adlandırma: ``<paket>_<sürüm>_<mimari>.deb``. Paket adı ve
+    mimari Debian paket adı biçimine uygun olmalıdır. Hatalı adlarda None döner.
+    """
+    filename = os.path.basename(path)
+    if not filename.endswith(".deb"):
+        return None
+
+    parts = filename[:-4].rsplit("_", 2)
+    if len(parts) != 3:
+        return None
+    name, version, architecture = parts
+    if (not _PACKAGE_NAME_RE.fullmatch(name)
+            or not _ARCHITECTURE_RE.fullmatch(architecture)
+            or not version
+            or any(char.isspace() for char in version)):
+        return None
+
+    return {"name": name, "version": version, "architecture": architecture}
+
+
+def _read_lfs_pointer(path):
+    """Dosya Git LFS pointer'ıysa gerçek nesnenin boyut ve SHA256 bilgisini alır."""
+    try:
+        with open(path, "rb") as stream:
+            header = stream.read(1024).decode("ascii")
+    except (OSError, UnicodeDecodeError):
+        return None
+
+    lines = header.splitlines()
+    if not lines or lines[0] != _LFS_VERSION:
+        return None
+
+    digest = None
+    size = None
+    for line in lines[1:]:
+        oid_match = _LFS_OID_RE.fullmatch(line)
+        if oid_match:
+            digest = oid_match.group(1).lower()
+            continue
+        size_match = _LFS_SIZE_RE.fullmatch(line)
+        if size_match:
+            size = int(size_match.group(1))
+
+    if digest is None or size is None:
+        return None
+    return {"sha256": digest, "size": size}
+
+
+def _control_metadata(path):
+    """.deb içindeki isteğe bağlı alanları alır; dosya adı temel kaynaktır."""
+    rc, out, _err = utils.run_cmd(["dpkg-deb", "-f", path])
+    if rc != 0:
+        return {}
+    return utils.parse_control(out)
+
 
 def scan_deb(path):
     """
     Bir .deb dosyasından (paket sözlüğü, bağımlılık listesi) üretir.
-    Metadata okunamazsa None döner.
-    """
-    rc, out, _err = utils.run_cmd(["dpkg-deb", "-f", path])
-    if rc != 0:
-        return None
-    control = utils.parse_control(out)
 
-    name = control.get("Package")
-    if not name:
+    Paket adı, sürümü ve mimarisi daima dosya adından alınır; içerik okunamasa
+    bile bu alanlarla veritabanı kaydı oluşturulur. Dosya adı beklenen biçimde
+    değilse None döner.
+    """
+    filename_info = parse_deb_filename(path)
+    if filename_info is None:
         return None
-    version = control.get("Version", "")
+
+    lfs_info = _read_lfs_pointer(path)
+    control = {} if lfs_info else _control_metadata(path)
+
+    # Dosya adındaki kimlik bilgileri otoritatiftir. LFS pointer'ında görünen
+    # boyut/SHA gerçek .deb nesnesine aittir; pointer'ın kendisine değil.
+    name = filename_info["name"]
+    version = filename_info["version"]
+    architecture = filename_info["architecture"]
+    if lfs_info:
+        size = lfs_info["size"]
+        sha256 = lfs_info["sha256"]
+        md5sum = None  # LFS pointer'ı MD5 bilgisini içermez
+    else:
+        size = os.path.getsize(path)
+        sha256 = security.sha256_file(path)
+        md5sum = security.md5_file(path)
+
     _epoch, _upstream, revision = utils.split_version(version)
     try:
         release = int(revision) if revision else 1
     except ValueError:
         release = 1
 
-    # Description: ilk satır özet, gerisi uzun açıklama
+    # Description: ilk satır özet, gerisi uzun açıklama. Kontrol bilgisi yoksa
+    # paket adı özet olarak kullanılır; böylece dosya adından oluşan kayıtlar da
+    # arama/listede anlamlı görünür.
     desc_lines = (control.get("Description") or "").splitlines()
-    synopsis = desc_lines[0].strip() if desc_lines else ""
+    synopsis = desc_lines[0].strip() if desc_lines else name
     long_desc = "\n".join(l.strip() for l in desc_lines[1:] if l.strip()) or None
 
     # Installed-Size KiB cinsindendir → bayta çevrilir
@@ -88,7 +172,7 @@ def scan_deb(path):
                 continue
             alternatives = utils.parse_depends(group)
             if len(alternatives) == 1 and len(alternatives[0]) == 1:
-                dep_name, _op, dep_version = alternatives[0][0]
+                _dep_name, _op, dep_version = alternatives[0][0]
                 # tek alternatif: kısıt varsa dep_version'a yazılır
                 # (görüntüleme için; çözücü asıl kısıtı dep_name'den okur)
                 deps.append({"dep_name": group, "dep_version": dep_version,
@@ -101,7 +185,7 @@ def scan_deb(path):
         "name": name,
         "version": version,
         "release": release,
-        "architecture": control.get("Architecture", "all"),
+        "architecture": architecture,
         "description": synopsis,
         "long_description": long_desc,
         "maintainer": control.get("Maintainer"),
@@ -110,10 +194,10 @@ def scan_deb(path):
         "section": control.get("Section"),
         "priority": control.get("Priority", "optional"),
         "filename": os.path.basename(path),
-        "size": os.path.getsize(path),
+        "size": size,
         "installed_size": installed_size,
-        "sha256": security.sha256_file(path),
-        "md5sum": security.md5_file(path),
+        "sha256": sha256,
+        "md5sum": md5sum,
     }
     return pkg, deps
 
@@ -133,7 +217,8 @@ def scan_pool(pool_dir, db_path, repo_name="deox"):
         result = scan_deb(path)
         if result is None:
             skipped.append(os.path.basename(path))
-            print("✗ atlanıyor (metadata okunamadı): %s" % os.path.basename(path))
+            print("✗ atlanıyor (dosya adı <paket>_<sürüm>_<mimari>.deb biçiminde değil): %s"
+                  % os.path.basename(path))
             continue
         pkg, deps = result
         pkg["repo"] = repo_name
@@ -171,6 +256,8 @@ def main(argv=None):
     print("🔮 DEOX repo tarayıcı — havuz: %s" % args.pool)
     summary = scan_pool(args.pool, args.db, args.repo)
     print("\nToplam %d paket işlendi → %s" % (summary["scanned"], summary["db"]))
+    if summary["skipped"]:
+        print("Atlanan .deb dosyaları: %s" % ", ".join(summary["skipped"]))
     return 0
 
 
